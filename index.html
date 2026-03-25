@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ハーモニーランド スケジュール</title>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700;900&family=M+PLUS+Rounded+1c:wght@400;700;900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<style>
+  :root {
+    --pink:    #F97BBD;
+    --pink2:   #FF5BA3;
+    --peach:   #FFB6C1;
+    --sky:     #87CEEA;
+    --mint:    #98E4D6;
+    --yellow:  #FFE566;
+    --lavender:#C8B4E8;
+    --bg:      #FFF5F9;
+    --card:    #FFFFFF;
+    --text:    #3D2040;
+    --muted:   #9B7AA0;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Zen Maru Gothic', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(circle at 10% 20%, rgba(249,123,189,0.12) 0%, transparent 40%),
+      radial-gradient(circle at 90% 80%, rgba(135,206,234,0.12) 0%, transparent 40%),
+      radial-gradient(circle at 50% 50%, rgba(200,180,232,0.08) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+  .wrapper { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 24px 16px 60px; }
+
+  /* ── ヘッダー ── */
+  header { text-align: center; margin-bottom: 24px; animation: fadeDown 0.6s ease both; }
+  .header-stars { font-size: 22px; letter-spacing: 6px; margin-bottom: 4px; opacity: 0.5; }
+  header h1 {
+    font-size: clamp(22px, 5vw, 34px); font-weight: 900;
+    background: linear-gradient(135deg, var(--pink2), var(--lavender), var(--sky));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text; line-height: 1.2; margin-bottom: 6px;
+  }
+  .date-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: linear-gradient(135deg, var(--pink), var(--lavender));
+    color: white; font-size: 15px; font-weight: 700;
+    padding: 6px 20px; border-radius: 99px; margin-top: 8px;
+    box-shadow: 0 4px 12px rgba(249,123,189,0.35);
+  }
+
+  /* ── 日付ナビ ── */
+  .nav-row {
+    display: flex; align-items: center; justify-content: center;
+    gap: 12px; margin-bottom: 20px; animation: fadeDown 0.7s ease both;
+  }
+  .nav-btn {
+    background: white; border: 2px solid var(--peach); color: var(--pink2);
+    font-family: inherit; font-size: 18px; font-weight: 900;
+    width: 42px; height: 42px; border-radius: 50%; cursor: pointer;
+    transition: all 0.2s; display: flex; align-items: center; justify-content: center;
+  }
+  .nav-btn:hover { background: var(--pink); color: white; border-color: var(--pink); transform: scale(1.1); }
+  .today-btn {
+    background: var(--yellow); border: 2px solid #FFD700; color: var(--text);
+    font-family: inherit; font-size: 13px; font-weight: 700;
+    padding: 8px 18px; border-radius: 99px; cursor: pointer; transition: all 0.2s;
+  }
+  .today-btn:hover { transform: scale(1.05); }
+  .nav-date { font-size: 20px; font-weight: 900; min-width: 120px; text-align: center; }
+
+  /* ── 営業情報バー ── */
+  .park-info-bar {
+    display: flex; align-items: center; justify-content: center;
+    gap: 16px; margin-bottom: 24px; animation: fadeDown 0.8s ease both; flex-wrap: wrap;
+  }
+  .park-hours {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: white; padding: 8px 20px; border-radius: 99px;
+    font-size: 15px; font-weight: 700;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06); border: 1.5px solid rgba(249,123,189,0.15);
+  }
+  .park-closed { background: linear-gradient(135deg, #f0f0f0, #e8e8e8); color: #999; border-color: #ddd; }
+
+  /* ── セクションタイトル ── */
+  .section-title {
+    font-size: 13px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 12px; padding-left: 4px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .section-title::after {
+    content: ''; flex: 1; height: 1px;
+    background: linear-gradient(to right, var(--peach), transparent);
+  }
+
+  /* ── ショー・イベントカード ── */
+  .schedule-card {
+    background: white; border-radius: 20px; overflow: hidden;
+    margin-bottom: 24px; box-shadow: 0 2px 16px rgba(249,123,189,0.12);
+    border: 1.5px solid rgba(249,123,189,0.2); animation: fadeUp 0.5s ease both 0.1s;
+  }
+  .schedule-card-header {
+    padding: 14px 20px; display: flex; align-items: center; justify-content: space-between;
+    gap: 12px; background: linear-gradient(135deg, rgba(249,123,189,0.1), rgba(200,180,232,0.1));
+    flex-wrap: wrap;
+  }
+  .schedule-card-header-left { display: flex; align-items: center; gap: 10px; }
+  .schedule-card-header h3 { font-size: 15px; font-weight: 900; }
+  .icon-circle {
+    width: 36px; height: 36px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; flex-shrink: 0;
+  }
+  .icon-pink { background: linear-gradient(135deg, #FF5BA3, #C8B4E8); }
+  .icon-sky { background: linear-gradient(135deg, #87CEEA, #C8B4E8); }
+
+  .pdf-btn-sm {
+    background: linear-gradient(135deg, var(--pink2), var(--lavender));
+    color: white; border: none; font-family: inherit; font-size: 12px; font-weight: 700;
+    padding: 8px 16px; border-radius: 99px; cursor: pointer; text-decoration: none;
+    display: inline-block; transition: all 0.2s;
+    box-shadow: 0 4px 12px rgba(249,123,189,0.3); white-space: nowrap;
+  }
+  .pdf-btn-sm:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(249,123,189,0.4); }
+
+  .schedule-card-body { padding: 16px 20px; }
+
+  /* ── イベントリスト ── */
+  .event-list { list-style: none; }
+  .event-item {
+    padding: 14px 0; border-bottom: 1px solid rgba(249,123,189,0.1);
+    display: flex; gap: 14px; align-items: flex-start;
+  }
+  .event-item:last-child { border-bottom: none; }
+  .event-time {
+    flex-shrink: 0; min-width: 110px;
+    font-size: 14px; font-weight: 900; color: var(--pink2);
+    padding-top: 2px;
+  }
+  .event-detail { flex: 1; }
+  .event-name { font-size: 15px; font-weight: 900; margin-bottom: 3px; }
+  .event-venue { font-size: 12px; color: var(--muted); margin-bottom: 2px; }
+  .event-cast { font-size: 13px; color: var(--text); line-height: 1.5; }
+  .event-note { font-size: 11px; color: var(--muted); margin-top: 4px; line-height: 1.5; }
+
+  /* ── アトラクションリスト ── */
+  .attraction-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 8px;
+  }
+  .attraction-item {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 12px; border-radius: 10px; font-size: 13px;
+    background: rgba(249,123,189,0.04);
+  }
+  .attraction-item:nth-child(even) { background: rgba(135,206,234,0.06); }
+  .attraction-name { font-weight: 700; }
+  .attraction-hours { color: var(--muted); font-weight: 500; white-space: nowrap; margin-left: 8px; }
+  .attraction-closed { color: #ccc; text-decoration: line-through; }
+
+  /* ── ステータス表示 ── */
+  .loading-area {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 10px; min-height: 150px; color: var(--muted); font-size: 13px;
+  }
+  .spinner { width: 28px; height: 28px; border: 3px solid rgba(249,123,189,0.2); border-top-color: var(--pink); border-radius: 50%; animation: spin 0.8s linear infinite; }
+  .error-area {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 8px; min-height: 120px; color: var(--muted); font-size: 14px; text-align: center;
+  }
+  .error-area .emoji { font-size: 36px; }
+
+  /* ── スタジオグリッド ── */
+  .studio-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 16px; margin-bottom: 24px;
+  }
+  .studio-card {
+    background: white; border-radius: 20px; overflow: hidden;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.06); border: 1.5px solid rgba(249,123,189,0.15);
+    transition: transform 0.2s, box-shadow 0.2s; animation: fadeUp 0.5s ease both;
+  }
+  .studio-card:hover { transform: translateY(-4px); box-shadow: 0 8px 28px rgba(249,123,189,0.2); }
+  .studio-card:nth-child(1) { animation-delay: 0.15s; }
+  .studio-card:nth-child(2) { animation-delay: 0.25s; }
+  .studio-card:nth-child(3) { animation-delay: 0.35s; }
+  .studio-header { padding: 14px 18px 12px; display: flex; align-items: center; gap: 10px; }
+  .s101 .studio-header { background: linear-gradient(135deg, rgba(249,123,189,0.15), rgba(249,123,189,0.05)); }
+  .s102 .studio-header { background: linear-gradient(135deg, rgba(135,206,234,0.2), rgba(135,206,234,0.05)); }
+  .s103 .studio-header { background: linear-gradient(135deg, rgba(152,228,214,0.2), rgba(152,228,214,0.05)); }
+  .studio-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+  .s101 .studio-dot { background: var(--pink2); }
+  .s102 .studio-dot { background: var(--sky); }
+  .s103 .studio-dot { background: var(--mint); }
+  .studio-header h2 { font-size: 15px; font-weight: 900; }
+  .studio-header .room-sub { font-size: 12px; color: var(--muted); margin-left: auto; }
+  .schedule-img-wrap {
+    padding: 0 12px 12px; min-height: 120px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .schedule-img-wrap img { width: 100%; border-radius: 12px; display: block; }
+  .img-loading {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 10px; height: 120px; color: var(--muted); font-size: 13px;
+  }
+  .no-schedule {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 6px; height: 100px; color: var(--muted); font-size: 13px; text-align: center;
+  }
+  .no-schedule .emoji { font-size: 30px; }
+
+  /* ── ヘルプ・フッター ── */
+  .help-card {
+    background: white; border-radius: 20px; padding: 20px 24px; margin-bottom: 16px;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.06); border: 1.5px solid rgba(200,180,232,0.25);
+    animation: fadeUp 0.5s ease both 0.4s;
+  }
+  footer { text-align: center; margin-top: 40px; font-size: 12px; color: var(--muted); line-height: 1.8; }
+  footer a { color: var(--pink2); text-decoration: none; }
+  footer a:hover { text-decoration: underline; }
+
+  @keyframes fadeDown { from { opacity:0; transform:translateY(-16px); } to { opacity:1; transform:translateY(0); } }
+  @keyframes fadeUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  @media (max-width: 600px) {
+    .wrapper { padding: 16px 10px 40px; }
+    header h1 { font-size: 22px; }
+    .date-badge { font-size: 13px; padding: 5px 14px; }
+    .nav-row { gap: 8px; }
+    .nav-btn { width: 36px; height: 36px; font-size: 16px; }
+    .nav-date { font-size: 17px; min-width: 100px; }
+    .today-btn { font-size: 12px; padding: 6px 14px; }
+    .park-hours { font-size: 13px; padding: 6px 14px; }
+    .section-title { font-size: 12px; }
+    .schedule-card { border-radius: 16px; }
+    .schedule-card-header { flex-direction: column; align-items: flex-start; gap: 8px; padding: 12px 14px; }
+    .schedule-card-body { padding: 12px 14px; }
+    .event-item { flex-direction: column; gap: 4px; }
+    .event-time { min-width: auto; font-size: 13px; }
+    .event-name { font-size: 14px; }
+    .event-cast { font-size: 12px; }
+    .event-note { font-size: 10px; }
+    .studio-grid { grid-template-columns: 1fr; }
+    .studio-card { border-radius: 16px; }
+    .help-card { padding: 14px 16px; border-radius: 16px; }
+    .help-card p { font-size: 12px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+  <header>
+    <div class="header-stars">&#x2726; &#x2726; &#x2726;</div>
+    <h1>ハーモニーランド<br>きょうのスケジュール</h1>
+    <div class="date-badge">
+      <span id="header-date">読み込み中...</span>
+    </div>
+  </header>
+
+  <div class="nav-row">
+    <button class="nav-btn" onclick="changeDay(-1)" title="前の日">&#x2039;</button>
+    <div class="nav-date" id="nav-date-display">-</div>
+    <button class="nav-btn" onclick="changeDay(+1)" title="次の日">&#x203A;</button>
+    <button class="today-btn" onclick="goToday()">今日</button>
+  </div>
+
+  <div class="park-info-bar">
+    <div class="park-hours" id="park-hours">
+      <span id="park-hours-text">読み込み中...</span>
+    </div>
+  </div>
+
+  <!-- ショー・グリーティング -->
+  <div class="section-title">&#x1F3AA; ライブショー・グリーティング</div>
+  <div class="schedule-card">
+    <div class="schedule-card-header">
+      <div class="schedule-card-header-left">
+        <div class="icon-circle icon-pink">&#x1F3B5;</div>
+        <h3 id="show-title">ショー＆ステージイベント</h3>
+      </div>
+      <a id="pdf-open-link" href="#" target="_blank" class="pdf-btn-sm">PDFで見る &#x2197;</a>
+    </div>
+    <div class="schedule-card-body" id="show-body">
+      <div class="loading-area"><div class="spinner"></div><span>スケジュールを取得中...</span></div>
+    </div>
+  </div>
+
+  <!-- ファンスタジオ -->
+  <div class="section-title">&#x1F3AD; ファンスタジオ キャラクタースケジュール</div>
+  <div class="studio-grid">
+    <div class="studio-card s101">
+      <div class="studio-header">
+        <span class="studio-dot"></span>
+        <h2>スタジオ 101号室</h2>
+        <span class="room-sub" id="room101-sub"></span>
+      </div>
+      <div class="schedule-img-wrap" id="img101">
+        <div class="img-loading"><div class="spinner"></div><span>読み込み中...</span></div>
+      </div>
+    </div>
+    <div class="studio-card s102">
+      <div class="studio-header">
+        <span class="studio-dot"></span>
+        <h2>スタジオ 102号室</h2>
+        <span class="room-sub" id="room102-sub"></span>
+      </div>
+      <div class="schedule-img-wrap" id="img102">
+        <div class="img-loading"><div class="spinner"></div><span>読み込み中...</span></div>
+      </div>
+    </div>
+    <div class="studio-card s103">
+      <div class="studio-header">
+        <span class="studio-dot"></span>
+        <h2>スタジオ 103号室</h2>
+        <span class="room-sub" id="room103-sub"></span>
+      </div>
+      <div class="schedule-img-wrap" id="img103">
+        <div class="img-loading"><div class="spinner"></div><span>読み込み中...</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="help-card">
+    <div class="section-title" style="margin-bottom:10px">&#x1F4A1; 使い方</div>
+    <p style="font-size:13px;color:var(--muted);line-height:1.8">
+      &#x2039; &#x203A; ボタンで日付を切り替えると、公式PDFからスケジュールを自動取得して表示します。<br>
+      データは公式サイトのPDFからリアルタイムで読み取っています（月初にPDF URLの更新が必要です）。<br>
+      <a href="https://www.harmonyland.jp/event#calendar" target="_blank">公式カレンダーページ</a>
+    </p>
+  </div>
+
+  <footer>
+    <p>データ出典: <a href="https://www.harmonyland.jp/" target="_blank">ハーモニーランド 公式サイト</a></p>
+    <p style="margin-top:4px">スケジュールは予告なく変更される場合があります。最新情報は公式サイトをご確認ください。</p>
+  </footer>
+
+</div>
+
+<script>
+// ══════════════════════════════════════════════════
+//  PDFスケジュール URLデータ（月ごとに更新が必要）
+// ══════════════════════════════════════════════════
+var PDF_SCHEDULE = {
+  '2026-03': {
+    closed: [5, 11, 12, 19],
+    hours: '10:00 ~ 17:00',
+    pdfs: {
+      1:  'https://www.harmonyland.jp/wp/wp-content/uploads/2026/02/5ee014c175df73532c6c1fe56066b3f4.pdf',
+      2:  'https://www.harmonyland.jp/wp/wp-content/uploads/2026/02/be0251fd1b6567475a0298827857d736.pdf',
+      3:  'https://www.harmonyland.jp/wp/wp-content/uploads/2026/02/67b47b63f119ae750f3f47ef314abfea.pdf',
+      4:  'https://www.harmonyland.jp/wp/wp-content/uploads/2026/02/37d93bb9ca2478c63e2378c66309b7c4.pdf',
+      6:  'https://www.harmonyland.jp/wp/wp-content/uploads/2026/02/f969fe592dcba3772706d659c89b1a2a.pdf',
+      7:  'https://www.harmonyland.jp/wp/wp-content/uploads/2026/03/0609b600ae53c1f405f8bb0081a7bc9b.pdf',
+      8:  'https://www.harmonyland.jp/wp/wp-content/uploads/2026/03/c46d3259b0998b70646ae0ffa85ef101.pdf',
+      9:  'https://www.harmonyland.jp/wp/wp-content/uploads/2026/02/ad66b304a6af5900744a6e7445342112.pdf',
+      10: 'https://www.harmonyland.jp/wp/wp-content/uploads/2026/02/575c86b080c4abc2ae4b8a79a5212d0a.pdf',
+      13: 'https://www.harmonyland.jp/wp/wp-content/uploads/2026/02/102f6bc941f04ac30b601d6031e2ec9e.pdf',
+      14: 'https://www.harmonyland.jp/wp/wp-content/uploads/2026/02/c8950a13a555ed7a583f52579cf1168b.pdf',
+      15: 'https://www.harmonyland.jp/wp/wp-content/uploads/2026/02/33a711662d4450ef2c8562c4736c1e18.pdf',
+      16: 'https://www.harmonyland.jp/wp/wp-content/uploads/2026/02/209b063ed6b26e89105d3414f29b244b.pdf',
+      17: 'https://www.harmonyland.jp/wp/wp-content/uploads/2026/02/9b64fedc9fd31543e899ec2a7882d50b.pdf',
+      18: 'https://www.harmonyland.jp/wp/wp-content/uploads/2026/02/6f907b5893ae6ef13f49d4ce672ebd4b.pdf',
+      20: 'https://www.harmonyland.jp/wp/wp-content/uploads/2026/02/385bda438e038c56057823fb81662a08.pdf',
+      21: 'https://www.harmonyland.jp/wp/wp-content/uploads/2026/02/ae08014a8fd0ab06075f0a15a8cbd87e.pdf',
+      22: 'https://www.harmonyland.jp/wp/wp-content/uploads/2026/02/4bad3b4ab9ce8c74aa9b2e4962482441.pdf',
+      23: 'https://www.harmonyland.jp/wp/wp-content/uploads/2026/02/bfeb12507a264c07fd1c8195377b0fc4.pdf',
+      24: 'https://www.harmonyland.jp/wp/wp-content/uploads/2026/02/4d35f621c0d65e58b382c4d98b2e243b.pdf',
+      25: 'https://www.harmonyland.jp/wp/wp-content/uploads/2026/02/56254c0835766b4ef9892b07010dd3da.pdf',
+      26: 'https://www.harmonyland.jp/wp/wp-content/uploads/2026/02/6164b35a327f6a24fcf49b86d319da42.pdf',
+      27: 'https://www.harmonyland.jp/wp/wp-content/uploads/2026/03/a7dc186748a57ed0ad65f28ca407cd09.pdf',
+      28: 'https://www.harmonyland.jp/wp/wp-content/uploads/2026/03/11105d294cc6ce7c25bd5ba2c1133879.pdf',
+      29: 'https://www.harmonyland.jp/wp/wp-content/uploads/2026/03/5f9e4f8b865f4e8866eb0441fbc5da28.pdf',
+      30: 'https://www.harmonyland.jp/wp/wp-content/uploads/2026/03/0d33508321cec5003d0cf13f5af798c0.pdf',
+      31: 'https://www.harmonyland.jp/wp/wp-content/uploads/2026/03/c9db1abbf5b4314c04521fdb7de71267.pdf'
+    }
+  }
+};
+
+// CORSプロキシ（ローカルHTMLから外部PDFを読むために必要）
+var CORS_PROXIES = [
+  function(url) { return 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(url); },
+  function(url) { return 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url); },
+  function(url) { return 'https://corsproxy.io/?' + encodeURIComponent(url); }
+];
+
+// ══════════════════════════════════════════════════
+//  状態管理
+// ══════════════════════════════════════════════════
+var currentDate = new Date();
+var pdfCache = {};
+
+function getToday() {
+  var now = new Date();
+  var jst = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }));
+  return new Date(jst.getFullYear(), jst.getMonth(), jst.getDate());
+}
+function changeDay(delta) {
+  currentDate.setDate(currentDate.getDate() + delta);
+  render();
+}
+function goToday() {
+  currentDate = getToday();
+  render();
+}
+
+// ══════════════════════════════════════════════════
+//  日付ユーティリティ
+// ══════════════════════════════════════════════════
+var WEEKDAYS = ['日','月','火','水','木','金','土'];
+
+function formatDisplay(d) {
+  var wd = WEEKDAYS[d.getDay()];
+  var col = d.getDay() === 0 ? '#F97BBD' : d.getDay() === 6 ? '#87CEEA' : 'inherit';
+  return '<span style="color:' + col + '">' + (d.getMonth()+1) + '月' + d.getDate() + '日（' + wd + '）</span>';
+}
+function formatKey(d) {
+  return String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0');
+}
+function formatHeaderDate(d) {
+  var wd = WEEKDAYS[d.getDay()];
+  return d.getFullYear() + '年' + (d.getMonth()+1) + '月' + d.getDate() + '日（' + wd + '）';
+}
+function getMonthKey(d) {
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+}
+function getPdfUrl(d) {
+  var m = PDF_SCHEDULE[getMonthKey(d)];
+  return m ? (m.pdfs[d.getDate()] || null) : null;
+}
+function isClosed(d) {
+  var m = PDF_SCHEDULE[getMonthKey(d)];
+  return m ? (m.closed || []).indexOf(d.getDate()) >= 0 : false;
+}
+function getHours(d) {
+  var m = PDF_SCHEDULE[getMonthKey(d)];
+  return m ? (m.hours || null) : null;
+}
+
+// ══════════════════════════════════════════════════
+//  PDF テキスト抽出（PDF.js）
+// ══════════════════════════════════════════════════
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+function fetchPdfText(pdfUrl) {
+  var cacheKey = pdfUrl;
+  if (pdfCache[cacheKey]) return Promise.resolve(pdfCache[cacheKey]);
+
+  // まず直接取得を試み、失敗したらCORSプロキシを試す
+  var attempts = [pdfUrl].concat(CORS_PROXIES.map(function(fn) { return fn(pdfUrl); }));
+
+  function tryFetch(idx) {
+    if (idx >= attempts.length) return Promise.reject(new Error('PDF取得失敗'));
+    return pdfjsLib.getDocument(attempts[idx]).promise
+      .then(function(pdf) {
+        return pdf.getPage(1).then(function(page) {
+          return page.getTextContent();
+        });
+      })
+      .then(function(textContent) {
+        var items = textContent.items.map(function(item) {
+          return { str: item.str, x: Math.round(item.transform[4]), y: Math.round(item.transform[5]) };
+        });
+        // Y降順（上から下）、同一行内はX昇順（左から右）
+        items.sort(function(a, b) {
+          if (Math.abs(a.y - b.y) > 5) return b.y - a.y;
+          return a.x - b.x;
+        });
+        // 行にまとめる
+        var lines = [];
+        var currentLine = [];
+        var currentY = null;
+        items.forEach(function(item) {
+          if (item.str.trim() === '') return;
+          if (currentY === null || Math.abs(item.y - currentY) > 5) {
+            if (currentLine.length > 0) lines.push(currentLine.join(' '));
+            currentLine = [item.str];
+            currentY = item.y;
+          } else {
+            currentLine.push(item.str);
+          }
+        });
+        if (currentLine.length > 0) lines.push(currentLine.join(' '));
+        pdfCache[cacheKey] = lines;
+        return lines;
+      })
+      .catch(function() { return tryFetch(idx + 1); });
+  }
+  return tryFetch(0);
+}
+
+// ══════════════════════════════════════════════════
+//  PDF テキスト → 構造化データ パーサー
+// ══════════════════════════════════════════════════
+function parseSchedule(lines) {
+  var events = [];
+  var attractions = [];
+  var notes = [];
+  var section = 'show'; // 'show' or 'attraction'
+  var currentEvent = null;
+  var timePattern = /^(\d{1,2}:\d{2})\s*[〜~～]\s*(\d{1,2}:\d{2})/;
+  var attractionPattern = /^★\s*(.+?)\s+(\d{1,2}:\d{2})\s*[〜~～]\s*(\d{1,2}:\d{2})/;
+  var attractionClosedPattern = /^★\s*(.+?)\s+運\s*休/;
+
+  for (var i = 0; i < lines.length; i++) {
+    var line = lines[i].trim();
+    if (!line) continue;
+
+    // セクション判定
+    if (line.indexOf('アトラクション') >= 0 && line.indexOf('ファンスタジオ') < 0 && line.indexOf('★') < 0 && line.length < 30) {
+      // 現在のイベントを保存
+      if (currentEvent) { events.push(currentEvent); currentEvent = null; }
+      section = 'attraction';
+      continue;
+    }
+
+    // 日付行・ヘッダー行はスキップ
+    if (line.match(/^\d+\s*[⽉月]\s*\d+\s*[⽇日]/)) continue;
+    if (line.indexOf('ライブショー') >= 0) continue;
+    if (line.indexOf('ショーの内容、開演時間') >= 0) continue;
+    if (line.indexOf('また、状況次第') >= 0) continue;
+    if (line.indexOf('混雑状況によっては') >= 0) continue;
+
+    if (section === 'show') {
+      // 時間行を検出
+      var timeMatch = line.match(timePattern);
+      if (timeMatch) {
+        if (currentEvent) events.push(currentEvent);
+        // 同一行にイベント名がある場合
+        var rest = line.substring(timeMatch[0].length).trim();
+        // "パレードパラレル" のように時間の後にイベント名
+        var eventName = '';
+        var venue = '';
+        if (rest) {
+          // パターン: "12:30 〜 12:50 パレードパラレル"
+          eventName = rest.replace(/^★\s*/, '');
+        }
+        currentEvent = {
+          time: timeMatch[1] + ' ~ ' + timeMatch[2],
+          name: eventName,
+          venue: '',
+          cast: '',
+          notes: []
+        };
+        continue;
+      }
+
+      if (currentEvent) {
+        // ★ イベント名
+        if (line.match(/^★\s*/)) {
+          var name = line.replace(/^★\s*/, '').trim();
+          if (currentEvent.name) {
+            currentEvent.name += ' ' + name;
+          } else {
+            currentEvent.name = name;
+          }
+          continue;
+        }
+        // 出演情報
+        if (line.indexOf('出演') >= 0) {
+          var cast = line.replace(/出演[︓：:]\s*/, '').trim();
+          if (currentEvent.cast) {
+            currentEvent.cast += '・' + cast;
+          } else {
+            currentEvent.cast = cast;
+          }
+          continue;
+        }
+        // 会場（ステージ名やビレッジ名）
+        if (line.match(/(ステージ|ビレッジ|スタジオ)/) && !line.match(/^※/) && !line.match(/^★/)) {
+          // 会場名 + 出演の複合行を分離
+          var castInVenue = line.match(/出演[︓：:]\s*(.*)/);
+          if (castInVenue) {
+            currentEvent.venue = line.substring(0, line.indexOf('出演')).trim();
+            currentEvent.cast = castInVenue[1].trim();
+          } else {
+            currentEvent.venue = line.trim();
+          }
+          continue;
+        }
+        // 注記
+        if (line.match(/^※/)) {
+          currentEvent.notes.push(line);
+          continue;
+        }
+        // キャラクター名の列挙行（・で繋がっている）
+        if (line.match(/[・]/)) {
+          if (currentEvent.cast) {
+            currentEvent.cast += '・' + line;
+          } else {
+            currentEvent.cast = line;
+          }
+          continue;
+        }
+        // ショー名の補足行（nakayoku birthday, [お願い]等）
+        if (line.match(/birthday|nakayoku|join hands|Blooming|BINGO|コンテスト/i)) {
+          if (currentEvent.name) {
+            currentEvent.name = line + ' ' + currentEvent.name;
+          } else {
+            currentEvent.name = line;
+          }
+          continue;
+        }
+        // [ショー上演についてのお願い] 等
+        if (line.match(/^\[/) || line.match(/^席数/) || line.match(/^ショー開始/) || line.match(/^キッズエリア/)) {
+          currentEvent.notes.push(line);
+          continue;
+        }
+        // その他の出演者名行
+        if (line.match(/^(ハローキティ|シナモロール|マイメロディ|ポムポム|クロミ|バッド|キキ|ララ|ぼんぼん|けろけろ|タキシード|ディアダニエル|ウィッシュ|ウサハナ|コロコロ|みるく|モカ|シフォン|あひる|ペックル|マイスウィート)/)) {
+          if (currentEvent.cast) {
+            currentEvent.cast += '・' + line;
+          } else {
+            currentEvent.cast = line;
+          }
+          continue;
+        }
+      }
+    }
+
+    if (section === 'attraction') {
+      // ★ アトラクション名 時間
+      var attrMatch = line.match(attractionPattern);
+      if (attrMatch) {
+        attractions.push({ name: attrMatch[1].trim(), hours: attrMatch[2] + ' ~ ' + attrMatch[3], closed: false });
+        continue;
+      }
+      var closedMatch = line.match(attractionClosedPattern);
+      if (closedMatch) {
+        attractions.push({ name: closedMatch[1].trim(), hours: '運休', closed: true });
+        continue;
+      }
+      // 注記行
+      if (line.match(/^(⾬天|ご妊娠|★\s*リズミック)/)) {
+        notes.push(line);
+        continue;
+      }
+      // 整理券等の情報行
+      if (line.match(/整理券|ブース/)) {
+        // 前のアトラクション項目の補足
+        continue;
+      }
+    }
+  }
+  if (currentEvent) events.push(currentEvent);
+
+  return { events: events, attractions: attractions, notes: notes };
+}
+
+// ══════════════════════════════════════════════════
+//  HTMLレンダリング
+// ══════════════════════════════════════════════════
+function renderEvents(data) {
+  if (data.events.length === 0) {
+    return '<div class="error-area"><span class="emoji">&#x1F4CB;</span><span>イベントデータなし</span></div>';
+  }
+  var html = '<ul class="event-list">';
+  data.events.forEach(function(ev) {
+    html += '<li class="event-item">';
+    html += '<div class="event-time">' + escapeHtml(ev.time) + '</div>';
+    html += '<div class="event-detail">';
+    html += '<div class="event-name">' + escapeHtml(ev.name || '(イベント)') + '</div>';
+    if (ev.venue) html += '<div class="event-venue">' + escapeHtml(ev.venue) + '</div>';
+    if (ev.cast) html += '<div class="event-cast">出演: ' + escapeHtml(ev.cast) + '</div>';
+    if (ev.notes.length > 0) {
+      html += '<div class="event-note">' + ev.notes.map(escapeHtml).join('<br>') + '</div>';
+    }
+    html += '</div></li>';
+  });
+  html += '</ul>';
+  return html;
+}
+
+function renderAttractions(data) {
+  if (data.attractions.length === 0) {
+    return '<div class="error-area"><span class="emoji">&#x1F3A2;</span><span>アトラクションデータなし</span></div>';
+  }
+  var html = '<div class="attraction-grid">';
+  data.attractions.forEach(function(attr) {
+    var cls = attr.closed ? ' attraction-closed' : '';
+    html += '<div class="attraction-item">';
+    html += '<span class="attraction-name' + cls + '">' + escapeHtml(attr.name) + '</span>';
+    html += '<span class="attraction-hours' + cls + '">' + escapeHtml(attr.hours) + '</span>';
+    html += '</div>';
+  });
+  html += '</div>';
+  return html;
+}
+
+function escapeHtml(str) {
+  var div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+// ══════════════════════════════════════════════════
+//  ファンスタジオ画像
+// ══════════════════════════════════════════════════
+var STUDIO_BASE = 'https://www.harmonyland.jp/sp/funstudio/images/time/';
+
+function tryImg(prefix, key, wrapper, label) {
+  wrapper.innerHTML = '<div class="img-loading"><div class="spinner"></div><span>読み込み中...</span></div>';
+  var suffixes = ['', '2'];
+  function attempt(idx) {
+    if (idx >= suffixes.length) {
+      wrapper.innerHTML = '<div class="no-schedule"><span class="emoji">&#x1F338;</span><span>本日のスケジュールは<br>公開されていません</span></div>';
+      return;
+    }
+    var img = new Image();
+    var url = STUDIO_BASE + prefix + key + suffixes[idx] + '.jpg';
+    img.onload = function() { wrapper.innerHTML = ''; wrapper.appendChild(img); img.style.cssText = 'width:100%;border-radius:12px;display:block;'; };
+    img.onerror = function() { attempt(idx + 1); };
+    img.src = url;
+    img.alt = label;
+  }
+  attempt(0);
+}
+
+// ══════════════════════════════════════════════════
+//  メインレンダリング
+// ══════════════════════════════════════════════════
+function render() {
+  var d = currentDate;
+  var key = formatKey(d);
+  var today = getToday();
+  var isToday = d.getTime() === today.getTime();
+
+  // ヘッダー
+  document.getElementById('header-date').textContent = formatHeaderDate(d);
+  document.getElementById('nav-date-display').innerHTML = formatDisplay(d);
+
+  // 営業時間
+  var hoursEl = document.getElementById('park-hours');
+  var hoursTextEl = document.getElementById('park-hours-text');
+  if (isClosed(d)) {
+    hoursTextEl.textContent = '休園日';
+    hoursEl.classList.add('park-closed');
+  } else {
+    var hours = getHours(d);
+    hoursTextEl.textContent = hours ? '営業時間 ' + hours : '営業時間 未定';
+    hoursEl.classList.remove('park-closed');
+  }
+
+  // PDF スケジュール取得＆表示
+  var pdfUrl = getPdfUrl(d);
+  var showBody = document.getElementById('show-body');
+  var pdfLink = document.getElementById('pdf-open-link');
+
+  if (isClosed(d)) {
+    showBody.innerHTML = '<div class="error-area"><span class="emoji">&#x1F634;</span><span>この日は休園日です</span></div>';
+    pdfLink.href = 'https://www.harmonyland.jp/event#calendar';
+  } else if (pdfUrl) {
+    pdfLink.href = pdfUrl;
+    showBody.innerHTML = '<div class="loading-area"><div class="spinner"></div><span>PDFからスケジュールを読み取り中...</span></div>';
+
+    fetchPdfText(pdfUrl).then(function(lines) {
+      var data = parseSchedule(lines);
+      showBody.innerHTML = renderEvents(data);
+    }).catch(function(err) {
+      showBody.innerHTML = '<div class="error-area"><span class="emoji">&#x26A0;&#xFE0F;</span><span>PDFの読み取りに失敗しました</span><a href="' + pdfUrl + '" target="_blank" style="color:var(--pink2);font-size:13px;margin-top:4px;">PDFを直接開く &rarr;</a></div>';
+    });
+  } else {
+    showBody.innerHTML = '<div class="error-area"><span class="emoji">&#x1F4C5;</span><span>この日のスケジュールはまだ公開されていないか、<br>データが未登録です</span><a href="https://www.harmonyland.jp/event#calendar" target="_blank" style="color:var(--pink2);font-size:13px;margin-top:4px;">公式カレンダーを確認 &rarr;</a></div>';
+    pdfLink.href = 'https://www.harmonyland.jp/event#calendar';
+  }
+
+  // ファンスタジオ
+  tryImg('g', key, document.getElementById('img101'), 'スタジオ101号室 ' + key);
+  tryImg('p', key, document.getElementById('img102'), 'スタジオ102号室 ' + key);
+  tryImg('s', key, document.getElementById('img103'), 'スタジオ103号室 ' + key);
+
+  var sub = isToday ? '今日' : '';
+  ['room101-sub','room102-sub','room103-sub'].forEach(function(id) {
+    var el = document.getElementById(id);
+    el.textContent = sub;
+    el.style.color = '#F97BBD';
+  });
+}
+
+// ══════════════════════════════════════════════════
+//  初期化
+// ══════════════════════════════════════════════════
+currentDate = getToday();
+render();
+</script>
+</body>
+</html>

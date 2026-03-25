@@ -229,6 +229,53 @@
   footer a { color: var(--pink2); text-decoration: none; }
   footer a:hover { text-decoration: underline; }
 
+  /* ── カレンダーポップアップ ── */
+  .cal-btn { font-size: 14px !important; }
+  .calendar-popup {
+    display: none; background: white; border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.12); border: 1.5px solid rgba(249,123,189,0.2);
+    padding: 16px; max-width: 320px; margin: -8px auto 20px;
+    animation: fadeDown 0.2s ease;
+  }
+  .calendar-popup.open { display: block; }
+  .cal-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .cal-month-label { font-size: 15px; font-weight: 900; }
+  .cal-nav {
+    background: none; border: 1.5px solid var(--peach); color: var(--pink2);
+    font-size: 18px; font-weight: 900; width: 32px; height: 32px;
+    border-radius: 50%; cursor: pointer; transition: all 0.2s;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .cal-nav:hover { background: var(--pink); color: white; border-color: var(--pink); }
+  .cal-grid {
+    display: grid; grid-template-columns: repeat(7, 1fr);
+    gap: 4px; text-align: center;
+  }
+  .cal-dow { font-size: 11px; font-weight: 700; color: var(--muted); padding: 4px 0; }
+  .cal-day {
+    font-size: 13px; font-weight: 700; padding: 6px 0; border-radius: 8px;
+    cursor: pointer; transition: all 0.15s; border: none; background: none;
+    color: var(--text);
+  }
+  .cal-day:hover { background: rgba(249,123,189,0.12); }
+  .cal-day.today { background: var(--yellow); color: var(--text); }
+  .cal-day.selected { background: var(--pink); color: white; }
+  .cal-day.closed { color: #ccc; text-decoration: line-through; }
+  .cal-day.has-pdf { position: relative; }
+  .cal-day.has-pdf::after {
+    content: ''; position: absolute; bottom: 2px; left: 50%;
+    transform: translateX(-50%); width: 4px; height: 4px;
+    border-radius: 50%; background: var(--pink2);
+  }
+  .cal-day.empty { visibility: hidden; }
+  .cal-day.sun { color: #F97BBD; }
+  .cal-day.sat { color: #87CEEA; }
+  .cal-day.sun.closed { color: #e8c0d0; }
+  .cal-day.sat.closed { color: #b8d8e8; }
+
   @keyframes fadeDown { from { opacity:0; transform:translateY(-16px); } to { opacity:1; transform:translateY(0); } }
   @keyframes fadeUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
   @keyframes spin { to { transform: rotate(360deg); } }
@@ -271,9 +318,22 @@
 
   <div class="nav-row">
     <button class="nav-btn" onclick="changeDay(-1)" title="前の日">&#x2039;</button>
-    <div class="nav-date" id="nav-date-display">-</div>
+    <div class="nav-date" id="nav-date-display" onclick="toggleCalendar()" style="cursor:pointer">-</div>
     <button class="nav-btn" onclick="changeDay(+1)" title="次の日">&#x203A;</button>
     <button class="today-btn" onclick="goToday()">今日</button>
+    <button class="nav-btn cal-btn" onclick="toggleCalendar()" title="カレンダー">&#x1F4C5;</button>
+  </div>
+  <div class="calendar-popup" id="calendar-popup">
+    <div class="cal-header">
+      <button class="cal-nav" onclick="calMonth(-1)">&#x2039;</button>
+      <span class="cal-month-label" id="cal-month-label"></span>
+      <button class="cal-nav" onclick="calMonth(+1)">&#x203A;</button>
+    </div>
+    <div class="cal-grid">
+      <span class="cal-dow">日</span><span class="cal-dow">月</span><span class="cal-dow">火</span>
+      <span class="cal-dow">水</span><span class="cal-dow">木</span><span class="cal-dow">金</span><span class="cal-dow">土</span>
+    </div>
+    <div class="cal-grid" id="cal-days"></div>
   </div>
 
   <div class="park-info-bar">
@@ -413,6 +473,67 @@ function changeDay(delta) {
 function goToday() {
   currentDate = getToday();
   render();
+  closeCalendar();
+}
+
+// ══════════════════════════════════════════════════
+//  カレンダー
+// ══════════════════════════════════════════════════
+var calViewDate = null; // カレンダー表示中の年月
+
+function toggleCalendar() {
+  var popup = document.getElementById('calendar-popup');
+  if (popup.classList.contains('open')) {
+    closeCalendar();
+  } else {
+    calViewDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+    renderCalendar();
+    popup.classList.add('open');
+  }
+}
+function closeCalendar() {
+  document.getElementById('calendar-popup').classList.remove('open');
+}
+function calMonth(delta) {
+  calViewDate.setMonth(calViewDate.getMonth() + delta);
+  renderCalendar();
+}
+function selectCalDay(year, month, day) {
+  currentDate = new Date(year, month, day);
+  closeCalendar();
+  render();
+}
+function renderCalendar() {
+  var y = calViewDate.getFullYear();
+  var m = calViewDate.getMonth();
+  document.getElementById('cal-month-label').textContent = y + '年' + (m + 1) + '月';
+
+  var firstDow = new Date(y, m, 1).getDay();
+  var daysInMonth = new Date(y, m + 1, 0).getDate();
+  var today = getToday();
+  var monthKey = y + '-' + String(m + 1).padStart(2, '0');
+  var monthData = PDF_SCHEDULE[monthKey];
+
+  var html = '';
+  // 空白セル
+  for (var i = 0; i < firstDow; i++) {
+    html += '<span class="cal-day empty"></span>';
+  }
+  for (var d = 1; d <= daysInMonth; d++) {
+    var dt = new Date(y, m, d);
+    var classes = ['cal-day'];
+    var dow = dt.getDay();
+    if (dow === 0) classes.push('sun');
+    if (dow === 6) classes.push('sat');
+    if (dt.getTime() === today.getTime()) classes.push('today');
+    if (dt.getTime() === currentDate.getTime()) classes.push('selected');
+    if (monthData) {
+      if ((monthData.closed || []).indexOf(d) >= 0) classes.push('closed');
+      else if (monthData.pdfs && monthData.pdfs[d]) classes.push('has-pdf');
+    }
+    html += '<button class="' + classes.join(' ') + '" onclick="selectCalDay(' + y + ',' + m + ',' + d + ')">' + d + '</button>';
+  }
+  document.getElementById('cal-days').innerHTML = html;
 }
 
 // ══════════════════════════════════════════════════

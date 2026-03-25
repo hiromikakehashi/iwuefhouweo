@@ -154,20 +154,6 @@
   .event-cast { font-size: 13px; color: var(--text); line-height: 1.5; }
   .event-note { font-size: 11px; color: var(--muted); margin-top: 4px; line-height: 1.5; }
 
-  /* ── アトラクションリスト ── */
-  .attraction-grid {
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 8px;
-  }
-  .attraction-item {
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 8px 12px; border-radius: 10px; font-size: 13px;
-    background: rgba(249,123,189,0.04);
-  }
-  .attraction-item:nth-child(even) { background: rgba(135,206,234,0.06); }
-  .attraction-name { font-weight: 700; }
-  .attraction-hours { color: var(--muted); font-weight: 500; white-space: nowrap; margin-left: 8px; }
-  .attraction-closed { color: #ccc; text-decoration: line-through; }
-
   /* ── ステータス表示 ── */
   .loading-area {
     display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -276,11 +262,72 @@
   .cal-day.sun.closed { color: #e8c0d0; }
   .cal-day.sat.closed { color: #b8d8e8; }
 
+  /* ── メインタブ ── */
+  .main-tabs {
+    display: flex; gap: 0; margin-bottom: 20px; justify-content: center;
+    animation: fadeDown 0.6s ease both;
+  }
+  .main-tab {
+    background: white; border: 2px solid var(--peach); color: var(--muted);
+    font-family: inherit; font-size: 14px; font-weight: 700;
+    padding: 10px 24px; cursor: pointer; transition: all 0.2s;
+  }
+  .main-tab:first-child { border-radius: 12px 0 0 12px; }
+  .main-tab:last-child { border-radius: 0 12px 12px 0; }
+  .main-tab.active {
+    background: linear-gradient(135deg, var(--pink), var(--lavender));
+    color: white; border-color: var(--pink);
+  }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; animation: fadeUp 0.3s ease; }
+
+  /* ── 出演一覧テーブル ── */
+  .cast-month-tabs {
+    display: flex; gap: 8px; margin-bottom: 16px; justify-content: center;
+  }
+  .cast-month-tab {
+    background: white; border: 2px solid var(--peach); color: var(--muted);
+    font-family: inherit; font-size: 13px; font-weight: 700;
+    padding: 6px 18px; border-radius: 99px; cursor: pointer; transition: all 0.2s;
+  }
+  .cast-month-tab.active {
+    background: var(--pink); color: white; border-color: var(--pink);
+  }
+  .cast-table-wrap {
+    overflow-x: auto; -webkit-overflow-scrolling: touch;
+    background: white; border-radius: 16px;
+    box-shadow: 0 2px 16px rgba(249,123,189,0.12);
+    border: 1.5px solid rgba(249,123,189,0.2);
+    margin-bottom: 24px;
+  }
+  .cast-table {
+    width: 100%; border-collapse: collapse; font-size: 13px; min-width: 580px;
+  }
+  .cast-table thead th {
+    background: linear-gradient(135deg, rgba(249,123,189,0.12), rgba(200,180,232,0.1));
+    padding: 10px 12px; font-weight: 900; text-align: left;
+    border-bottom: 2px solid rgba(249,123,189,0.15);
+    position: sticky; top: 0; white-space: nowrap;
+  }
+  .cast-table tbody td {
+    padding: 8px 12px; border-bottom: 1px solid rgba(249,123,189,0.08);
+    vertical-align: top;
+  }
+  .cast-table tbody tr:hover { background: rgba(249,123,189,0.04); }
+  .cast-table .date-col { font-weight: 900; color: var(--pink2); white-space: nowrap; min-width: 50px; }
+  .cast-table .no-data { color: #ccc; }
+  .cast-table .sun { color: #F97BBD; }
+  .cast-table .sat { color: #87CEEA; }
+
   @keyframes fadeDown { from { opacity:0; transform:translateY(-16px); } to { opacity:1; transform:translateY(0); } }
   @keyframes fadeUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
   @keyframes spin { to { transform: rotate(360deg); } }
 
   @media (max-width: 600px) {
+    .main-tab { font-size: 12px; padding: 8px 16px; }
+    .cast-table { font-size: 11px; min-width: 500px; }
+    .cast-table thead th { padding: 8px 8px; }
+    .cast-table tbody td { padding: 6px 8px; }
     .wrapper { padding: 16px 10px 40px; }
     header h1 { font-size: 22px; }
     .date-badge { font-size: 13px; padding: 5px 14px; }
@@ -342,64 +389,83 @@
     </div>
   </div>
 
-  <!-- ショー・グリーティング -->
-  <div class="section-title">&#x1F3AA; ライブショー・グリーティング</div>
-  <div class="schedule-card">
-    <div class="schedule-card-header">
-      <div class="schedule-card-header-left">
-        <div class="icon-circle icon-pink">&#x1F3B5;</div>
-        <h3 id="show-title">ショー＆ステージイベント</h3>
-      </div>
-      <a id="pdf-open-link" href="#" target="_blank" class="pdf-btn-sm">PDFで見る &#x2197;</a>
-    </div>
-    <div class="schedule-card-body" id="show-body">
-      <div class="loading-area"><div class="spinner"></div><span>スケジュールを取得中...</span></div>
-    </div>
+  <!-- メインタブ -->
+  <div class="main-tabs">
+    <button class="main-tab active" onclick="switchMainTab('schedule')">&#x1F4C5; 今日のスケジュール</button>
+    <button class="main-tab" onclick="switchMainTab('cast')">&#x1F3AD; 出演キャラ一覧</button>
   </div>
 
-  <!-- ファンスタジオ -->
-  <div class="section-title">&#x1F3AD; ファンスタジオ キャラクタースケジュール</div>
-  <div class="studio-grid">
-    <div class="studio-card s101">
-      <div class="studio-header">
-        <span class="studio-dot"></span>
-        <h2>スタジオ 101号室</h2>
-        <span class="room-sub" id="room101-sub"></span>
-      </div>
-      <div class="schedule-img-wrap" id="img101">
-        <div class="img-loading"><div class="spinner"></div><span>読み込み中...</span></div>
-      </div>
-    </div>
-    <div class="studio-card s102">
-      <div class="studio-header">
-        <span class="studio-dot"></span>
-        <h2>スタジオ 102号室</h2>
-        <span class="room-sub" id="room102-sub"></span>
-      </div>
-      <div class="schedule-img-wrap" id="img102">
-        <div class="img-loading"><div class="spinner"></div><span>読み込み中...</span></div>
-      </div>
-    </div>
-    <div class="studio-card s103">
-      <div class="studio-header">
-        <span class="studio-dot"></span>
-        <h2>スタジオ 103号室</h2>
-        <span class="room-sub" id="room103-sub"></span>
-      </div>
-      <div class="schedule-img-wrap" id="img103">
-        <div class="img-loading"><div class="spinner"></div><span>読み込み中...</span></div>
-      </div>
-    </div>
-  </div>
+  <!-- タブ1: 今日のスケジュール -->
+  <div class="tab-content active" id="tab-schedule">
 
-  <div class="help-card">
-    <div class="section-title" style="margin-bottom:10px">&#x1F4A1; 使い方</div>
-    <p style="font-size:13px;color:var(--muted);line-height:1.8">
-      &#x2039; &#x203A; ボタンで日付を切り替えると、公式PDFからスケジュールを自動取得して表示します。<br>
-      データは公式サイトのPDFからリアルタイムで読み取っています（月初にPDF URLの更新が必要です）。<br>
-      <a href="https://www.harmonyland.jp/event#calendar" target="_blank">公式カレンダーページ</a>
-    </p>
-  </div>
+    <!-- ショー・グリーティング -->
+    <div class="section-title">&#x1F3AA; ライブショー・グリーティング</div>
+    <div class="schedule-card">
+      <div class="schedule-card-header">
+        <div class="schedule-card-header-left">
+          <div class="icon-circle icon-pink">&#x1F3B5;</div>
+          <h3 id="show-title">ショー＆ステージイベント</h3>
+        </div>
+        <a id="pdf-open-link" href="#" target="_blank" class="pdf-btn-sm">PDFで見る &#x2197;</a>
+      </div>
+      <div class="schedule-card-body" id="show-body">
+        <div class="loading-area"><div class="spinner"></div><span>スケジュールを取得中...</span></div>
+      </div>
+    </div>
+
+    <!-- ファンスタジオ -->
+    <div class="section-title">&#x1F3AD; ファンスタジオ キャラクタースケジュール</div>
+    <div class="studio-grid">
+      <div class="studio-card s101">
+        <div class="studio-header">
+          <span class="studio-dot"></span>
+          <h2>スタジオ 101号室</h2>
+          <span class="room-sub" id="room101-sub"></span>
+        </div>
+        <div class="schedule-img-wrap" id="img101">
+          <div class="img-loading"><div class="spinner"></div><span>読み込み中...</span></div>
+        </div>
+      </div>
+      <div class="studio-card s102">
+        <div class="studio-header">
+          <span class="studio-dot"></span>
+          <h2>スタジオ 102号室</h2>
+          <span class="room-sub" id="room102-sub"></span>
+        </div>
+        <div class="schedule-img-wrap" id="img102">
+          <div class="img-loading"><div class="spinner"></div><span>読み込み中...</span></div>
+        </div>
+      </div>
+      <div class="studio-card s103">
+        <div class="studio-header">
+          <span class="studio-dot"></span>
+          <h2>スタジオ 103号室</h2>
+          <span class="room-sub" id="room103-sub"></span>
+        </div>
+        <div class="schedule-img-wrap" id="img103">
+          <div class="img-loading"><div class="spinner"></div><span>読み込み中...</span></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /tab-schedule -->
+
+  <!-- タブ2: 出演キャラ一覧 -->
+  <div class="tab-content" id="tab-cast">
+    <div class="cast-table-wrap">
+      <table class="cast-table" id="cast-table">
+        <thead>
+          <tr>
+            <th>日付</th>
+            <th>おでむかえ</th>
+            <th>ビンゴ</th>
+            <th>ハイタッチ</th>
+          </tr>
+        </thead>
+        <tbody id="cast-tbody"></tbody>
+      </table>
+    </div>
+  </div><!-- /tab-cast -->
 
   <footer>
     <p>データ出典: <a href="https://www.harmonyland.jp/" target="_blank">ハーモニーランド 公式サイト</a></p>
@@ -444,6 +510,30 @@ var PDF_SCHEDULE = {
       29: 'https://www.harmonyland.jp/wp/wp-content/uploads/2026/03/5f9e4f8b865f4e8866eb0441fbc5da28.pdf',
       30: 'https://www.harmonyland.jp/wp/wp-content/uploads/2026/03/0d33508321cec5003d0cf13f5af798c0.pdf',
       31: 'https://www.harmonyland.jp/wp/wp-content/uploads/2026/03/c9db1abbf5b4314c04521fdb7de71267.pdf'
+    }
+  },
+  '2026-04': {
+    closed: [8, 9, 15, 22, 23, 24, 25, 26, 27, 28, 29, 30],
+    hours: '10:00 ~ 17:00',
+    pdfs: {
+      1:  'https://www.harmonyland.jp/wp/wp-content/uploads/2026/03/5a81331cf56fe888e123a42101e39b88.pdf',
+      2:  'https://www.harmonyland.jp/wp/wp-content/uploads/2026/03/52639c9f7397bea6282ca4df4dc3efc3.pdf',
+      3:  'https://www.harmonyland.jp/wp/wp-content/uploads/2026/03/1439a576f87d4fc5ded879fe590d0b0c.pdf',
+      4:  'https://www.harmonyland.jp/wp/wp-content/uploads/2026/03/8c66f5d14397e96ed0b9b4abb210b0f0.pdf',
+      5:  'https://www.harmonyland.jp/wp/wp-content/uploads/2026/03/b71e3800d1067558e5b1c3be7c8474dd.pdf',
+      6:  'https://www.harmonyland.jp/wp/wp-content/uploads/2026/03/5cda5db56d9f8ec2c0bdac8cdb0aaf87.pdf',
+      7:  'https://www.harmonyland.jp/wp/wp-content/uploads/2026/03/1326b848b7844ff5c860f7c5b7818e75.pdf',
+      10: 'https://www.harmonyland.jp/wp/wp-content/uploads/2026/03/2c4afffeba5e30a26cfde66c5cfc34e7.pdf',
+      11: 'https://www.harmonyland.jp/wp/wp-content/uploads/2026/03/6e8743340553ad79e7931cd3b04cb280.pdf',
+      12: 'https://www.harmonyland.jp/wp/wp-content/uploads/2026/03/0e06c5d135e7ec0b254b496b1fa81d38.pdf',
+      13: 'https://www.harmonyland.jp/wp/wp-content/uploads/2026/03/8afb752f2e1115fa8768d5cf5d507d60.pdf',
+      14: 'https://www.harmonyland.jp/wp/wp-content/uploads/2026/03/13bcc3a23dcf5e95d31b7d4826f79d9d.pdf',
+      16: 'https://www.harmonyland.jp/wp/wp-content/uploads/2026/03/16ee3ae7a50a5c60f63759d91550e619.pdf',
+      17: 'https://www.harmonyland.jp/wp/wp-content/uploads/2026/03/2abece0e0a3c869b99cbf9a599dfb6b2.pdf',
+      18: 'https://www.harmonyland.jp/wp/wp-content/uploads/2026/03/ed55e533df2942d52c6393f7b627c58a.pdf',
+      19: 'https://www.harmonyland.jp/wp/wp-content/uploads/2026/03/8440a697d24449aae17d1134f09929f3.pdf',
+      20: 'https://www.harmonyland.jp/wp/wp-content/uploads/2026/03/d681b9dc749e9590f28ccd430eec11a0.pdf',
+      21: 'https://www.harmonyland.jp/wp/wp-content/uploads/2026/03/0d5019909cda0247956a587cab6cc71e.pdf'
     }
   }
 };
@@ -803,22 +893,6 @@ function renderEvents(data) {
   return html;
 }
 
-function renderAttractions(data) {
-  if (data.attractions.length === 0) {
-    return '<div class="error-area"><span class="emoji">&#x1F3A2;</span><span>アトラクションデータなし</span></div>';
-  }
-  var html = '<div class="attraction-grid">';
-  data.attractions.forEach(function(attr) {
-    var cls = attr.closed ? ' attraction-closed' : '';
-    html += '<div class="attraction-item">';
-    html += '<span class="attraction-name' + cls + '">' + escapeHtml(attr.name) + '</span>';
-    html += '<span class="attraction-hours' + cls + '">' + escapeHtml(attr.hours) + '</span>';
-    html += '</div>';
-  });
-  html += '</div>';
-  return html;
-}
-
 function escapeHtml(str) {
   var div = document.createElement('div');
   div.textContent = str;
@@ -907,6 +981,72 @@ function render() {
     el.textContent = sub;
     el.style.color = '#F97BBD';
   });
+}
+
+// ══════════════════════════════════════════════════
+//  メインタブ切り替え
+// ══════════════════════════════════════════════════
+function switchMainTab(tabName) {
+  document.querySelectorAll('.main-tab').forEach(function(btn, i) {
+    btn.classList.toggle('active', (tabName === 'schedule' && i === 0) || (tabName === 'cast' && i === 1));
+  });
+  document.getElementById('tab-schedule').classList.toggle('active', tabName === 'schedule');
+  document.getElementById('tab-cast').classList.toggle('active', tabName === 'cast');
+  if (tabName === 'cast') renderCastTable();
+}
+
+// ══════════════════════════════════════════════════
+//  キャラクター出演データ（PDFから抽出済み・3/23以降）
+// ══════════════════════════════════════════════════
+var CAST_DATA = [
+  { m:3, d:23, w:1, o:'ウサハナ・ルビー', b:'コロコロクリリン', h:'シナモロール・ポムポムプリン・ぼんぼんりぼん' },
+  { m:3, d:24, w:2, o:'モカ・シフォン', b:'マイスウィートピアノ', h:'シナモロール・ポムポムプリン・ぼんぼんりぼん' },
+  { m:3, d:25, w:3, o:'モカ・シフォン', b:'マイスウィートピアノ', h:'シナモロール・ポムポムプリン・ぼんぼんりぼん' },
+  { m:3, d:26, w:4, o:'ぼんぼんりぼん・マイメロディ', b:'ウサハナ', h:'シナモロール・ポムポムプリン・ぼんぼんりぼん' },
+  { m:3, d:27, w:5, o:'ぼんぼんりぼん・マイメロディ', b:'ウサハナ', h:'ハローキティ・ハローミミィ・キキ・ララ' },
+  { m:3, d:28, w:6, o:'しろうさ・くろうさ', b:'モカ', h:'ハローキティ・ハローミミィ・キキ・ララ' },
+  { m:3, d:29, w:0, o:'しろうさ・くろうさ', b:'モカ', h:'バッドばつ丸・ディアダニエル' },
+  { m:3, d:30, w:1, o:'バッドばつ丸・タキシードサム', b:'ぼんぼんりぼん', h:'バッドばつ丸・ディアダニエル' },
+  { m:3, d:31, w:2, o:'バッドばつ丸・タキシードサム', b:'ぼんぼんりぼん', h:'バッドばつ丸・ディアダニエル' },
+  { m:4, d:1,  w:3, o:'タキシードサム・けろけろけろっぴ', b:'クロミ', h:'ハローキティ・ハローミミィ・ポムポムプリン・コロコロクリリン' },
+  { m:4, d:2,  w:4, o:'タキシードサム・けろけろけろっぴ', b:'クロミ', h:'ハローキティ・ハローミミィ・ポムポムプリン・コロコロクリリン' },
+  { m:4, d:3,  w:5, o:'モップ・マイスウィートピアノ', b:'シフォン', h:'ハローキティ・ハローミミィ・ポムポムプリン・コロコロクリリン' },
+  { m:4, d:4,  w:6, o:'モップ・マイスウィートピアノ', b:'シフォン', h:'ウィッシュミーメル・ルビー・しろうさ・くろうさ' },
+  { m:4, d:5,  w:0, o:'キキ・ララ', b:'マイメロディ', h:'ウィッシュミーメル・ルビー・しろうさ・くろうさ' },
+  { m:4, d:6,  w:1, o:'キキ・ララ', b:'マイメロディ', h:'ウィッシュミーメル・ルビー・しろうさ・くろうさ' },
+  { m:4, d:7,  w:2, o:'キキ・ララ', b:'マイスウィートピアノ', h:'ハローキティ・ハローミミィ・マロンクリーム・ウィッシュミーメル' },
+  { m:4, d:10, w:5, o:'あひるのペックル・けろけろけろっぴ', b:'マイスウィートピアノ', h:'ハローキティ・ハローミミィ・マロンクリーム・ウィッシュミーメル' },
+  { m:4, d:11, w:6, o:'あひるのペックル・けろけろけろっぴ', b:'-', h:'-' },
+  { m:4, d:12, w:0, o:'あひるのペックル・けろけろけろっぴ', b:'ウィッシュミーメル', h:'ウィッシュミーメル・モップ・マイスウィートピアノ・あひるのペックル' },
+  { m:4, d:13, w:1, o:'みるく・エスプレッソ', b:'ウィッシュミーメル', h:'ウィッシュミーメル・モップ・マイスウィートピアノ・あひるのペックル' },
+  { m:4, d:14, w:2, o:'みるく・エスプレッソ', b:'ウィッシュミーメル', h:'ウィッシュミーメル・モップ・マイスウィートピアノ・あひるのペックル' },
+  { m:4, d:16, w:4, o:'ポムポムプリン・ディアダニエル', b:'ウサハナ', h:'ポムポムプリン・バッドばつ丸・シナモロール' },
+  { m:4, d:17, w:5, o:'ポムポムプリン・ディアダニエル', b:'ウサハナ', h:'ポムポムプリン・バッドばつ丸・シナモロール' },
+  { m:4, d:18, w:6, o:'ポムポムプリン・モップ', b:'モカ', h:'ポムポムプリン・バッドばつ丸・シナモロール' },
+  { m:4, d:19, w:0, o:'ポムポムプリン・モップ', b:'モカ', h:'ポムポムプリン・バッドばつ丸・シナモロール' },
+  { m:4, d:20, w:1, o:'ルビー・ぼんぼんりぼん', b:'マイメロディ', h:'ハローキティ・ハローミミィ・けろけろけろっぴ・タキシードサム' },
+  { m:4, d:21, w:2, o:'ルビー・ぼんぼんりぼん', b:'マイメロディ', h:'ハローキティ・ハローミミィ・けろけろけろっぴ・タキシードサム' }
+];
+
+function renderCastTable() {
+  var tbody = document.getElementById('cast-tbody');
+  var html = '';
+  var lastMonth = 0;
+  CAST_DATA.forEach(function(row) {
+    if (row.m !== lastMonth) {
+      html += '<tr><td colspan="4" style="background:linear-gradient(135deg,rgba(249,123,189,0.12),rgba(200,180,232,0.1));font-weight:900;padding:10px 12px;font-size:14px;">' + row.m + '月</td></tr>';
+      lastMonth = row.m;
+    }
+    var dayClass = row.w === 0 ? ' sun' : row.w === 6 ? ' sat' : '';
+    var wd = WEEKDAYS[row.w];
+    html += '<tr>';
+    html += '<td class="date-col' + dayClass + '">' + row.d + '日(' + wd + ')</td>';
+    html += '<td>' + (row.o === '-' ? '<span class="no-data">-</span>' : escapeHtml(row.o)) + '</td>';
+    html += '<td>' + (row.b === '-' ? '<span class="no-data">-</span>' : escapeHtml(row.b)) + '</td>';
+    html += '<td>' + (row.h === '-' ? '<span class="no-data">-</span>' : escapeHtml(row.h)) + '</td>';
+    html += '</tr>';
+  });
+  tbody.innerHTML = html;
 }
 
 // ══════════════════════════════════════════════════
